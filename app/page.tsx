@@ -1,5 +1,6 @@
 
 import { Search, Brain, BookOpen, Zap, Target, Sparkles, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import SearchBar from './components/SearchBar';
 
 export default function Home() {
   return (
@@ -43,18 +44,7 @@ export default function Home() {
         </div>
         
         {/* Search Bar */}
-        <div className="w-full max-w-4xl mx-auto mb-16">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for books..."
-              className="w-full px-6 py-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 backdrop-blur-xs border-2 border-primary/30 text-foreground font-sans text-lg placeholder-text-muted focus:outline-none focus:border-primary/60 focus:shadow-[0_0_15px_rgba(0,255,255,0.4)] transition-all duration-300 rounded-full shadow-[0_0_10px_rgba(0,255,255,0.2)] hover:shadow-[0_0_15px_rgba(255,0,128,0.3)]"
-            />
-            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-accent">
-              <Search size={20} />
-            </div>
-          </div>
-        </div>
+        <SearchBar />
         
         <div className="flex flex-col sm:flex-row gap-4">
           <button className="bg-primary text-background px-8 py-4 rounded-lg font-bold text-xl shadow-[0_0_30px_rgba(0,255,255,0.6)] hover:shadow-[0_0_40px_rgba(0,255,255,0.8)] transition-all duration-300 transform hover:scale-105 border-black border-4">
