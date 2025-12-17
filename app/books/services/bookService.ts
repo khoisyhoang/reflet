@@ -22,9 +22,11 @@ export interface Edition {
   // Add other fields as needed
 }
 
-export interface EditionsResult {
-  size: number;
-  entries: Edition[];
+export interface Work {
+  key: string;
+  title: string;
+  covers?: number[];
+  // Add other fields as needed
 }
 
 export interface SearchResult {
@@ -41,7 +43,7 @@ export interface SearchResult {
  * @returns Promise<Book[]> - Array of book objects
  * @throws Error when API call fails or returns error
  */
-export async function searchBooks(query: string, limit: number = 20, sort: 'relevance' | 'edition_count_asc' | 'edition_count_desc' = 'edition_count_asc'): Promise<Book[]> {
+export async function searchBooks(query: string, limit: number = 20, sort: string = 'rating'): Promise<Book[]> {
   if (!query.trim()) {
     throw new Error('Search query cannot be empty');
   }
@@ -50,8 +52,8 @@ export async function searchBooks(query: string, limit: number = 20, sort: 'rele
     // Build URL with sort parameter
     let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}`;
     
-    if (sort === 'edition_count_desc') {
-      url += '&sort=editions';
+    if (sort === 'rating') {
+      url += '&sort=rating';
     }
 
     const response = await fetch(url);
@@ -74,13 +76,6 @@ export async function searchBooks(query: string, limit: number = 20, sort: 'rele
     if (books.length === 0 && data.numFound === undefined) {
       throw new Error('Invalid response format from OpenLibrary API');
     }
-
-    // Sort results based on the sort parameter
-    if (sort === 'edition_count_asc') {
-      books.sort((a: Book, b: Book) => (a.edition_count || 0) - (b.edition_count || 0));
-    }
-    // For 'edition_count_desc', we already sorted via API
-    // For 'relevance', use default order from API
 
     return books;
   } catch (error) {
@@ -129,6 +124,42 @@ export async function fetchWorkEditions(workId: string, limit: number = 50): Pro
     }
 
     return editions;
+  } catch (error) {
+    // Re-throw with more context if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Fetch work data for a specific work
+ * @param workId - The work ID (e.g., 'OL45804W')
+ * @returns Promise<Work> - Work object
+ * @throws Error when API call fails or returns error
+ */
+export async function fetchWork(workId: string): Promise<Work> {
+  if (!workId) {
+    throw new Error('Work ID cannot be empty');
+  }
+
+  try {
+    const response = await fetch(`https://openlibrary.org/works/${workId}.json`);
+
+    const data: any = await response.json();
+
+    // Check for API error in response
+    if (data.error) {
+      throw new Error(`OpenLibrary API error: ${data.error}`);
+    }
+
+    // Handle API response with error message
+    if (data.message && typeof data.message === 'string') {
+      throw new Error(`Failed to fetch work: ${data.message}`);
+    }
+
+    return data;
   } catch (error) {
     // Re-throw with more context if it's a network error
     if (error instanceof TypeError && error.message.includes('fetch')) {
