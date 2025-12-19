@@ -52,8 +52,8 @@ export async function searchBooks(query: string, limit: number = 20, sort: strin
     // Build URL with sort parameter
     let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}`;
     
-    if (sort === 'rating') {
-      url += '&sort=rating';
+    if (sort) {
+      url += `&sort=${encodeURIComponent(sort)}`;
     }
 
     const response = await fetch(url);

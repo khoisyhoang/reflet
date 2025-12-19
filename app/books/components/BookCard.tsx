@@ -64,6 +64,12 @@ export default function BookCard({ book, index }: BookCardProps) {
               >
                 Editions
               </Link>
+              <Link
+                href={`/books/reading-session?work=${book.key.replace('/works/', '')}`}
+                className="bg-green-600/80 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Start Reading
+              </Link>
             </div>
           </div>
         </div>

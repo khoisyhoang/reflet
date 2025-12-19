@@ -27,11 +27,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {/* Search Bar */}
         <SearchBar />
 
-        <div className="mb-8">
+        {query !== "" && <div className="mb-8">
           <p className="text-lg text-foreground/80">
             Searching for: <span className="font-semibold text-primary">"{query}"</span>
           </p>
-        </div>
+        </div>}
 
         {query.length < 3 ? (
           <p className="text-lg font-semibold text-red-500">
