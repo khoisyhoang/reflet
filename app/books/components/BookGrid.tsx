@@ -26,7 +26,7 @@ export default async function BookGrid({ searchParams }: BookGridProps) {
     <div>
       {/* {query && <SortSelector currentSort={sort} />} */}
       <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-6">
           {books.map((book, index) => (
             <BookCard key={book.key || index} book={book} index={index} />
           ))}

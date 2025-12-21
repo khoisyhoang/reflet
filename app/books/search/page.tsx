@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import SearchBar from '../../components/SearchBar';
 import BookGrid from '../components/BookGrid';
 import BookGridSkeleton from '../components/BookGridSkeleton';
@@ -16,6 +17,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <div className="min-h-screen bg-background text-foreground font-sans p-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
+          <Link href="/books/my-books" className="text-primary hover:underline mb-4 inline-block mr-4">
+            My Books
+          </Link>
           <h1 className="text-5xl font-heading font-black text-primary mb-4 tracking-tight">
             Book Discovery
           </h1>

@@ -1,3 +1,10 @@
+export interface EditionsResponse {
+  numFound: number;
+  start: number;
+  numFoundExact: boolean;
+  docs: Edition[];
+}
+
 export interface Book {
   key: string;
   title: string;
@@ -6,6 +13,8 @@ export interface Book {
   publisher?: string[];
   cover_i?: number;
   edition_count?: number;
+  editions?: EditionsResponse;
+  subject?: string[];
   // Add other fields as needed
 }
 
@@ -50,7 +59,7 @@ export async function searchBooks(query: string, limit: number = 20, sort: strin
 
   try {
     // Build URL with sort parameter
-    let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}`;
+    let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=*,editions`;
     
     if (sort) {
       url += `&sort=${encodeURIComponent(sort)}`;
