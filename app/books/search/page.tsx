@@ -12,7 +12,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q || '';
 
-
   return (
     <div className="min-h-screen bg-background text-foreground font-sans p-6">
       <div className="max-w-7xl mx-auto">
@@ -37,15 +36,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </p>
         </div>}
 
-        {query.length < 3 ? (
-          <p className="text-lg font-semibold text-red-500">
-            Please enter a search term with at least 3 characters.
-          </p>
-        ) : (
-          <Suspense fallback={<BookGridSkeleton />} key={query}>
-            <BookGrid searchParams={searchParams}/>
-          </Suspense>
-        )}
+        <Suspense fallback={<BookGridSkeleton />} key={query}>
+          <BookGrid searchParams={searchParams}/>
+        </Suspense>
       </div>
     </div>
   );

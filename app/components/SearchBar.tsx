@@ -7,12 +7,17 @@ import { useState } from 'react';
 export default function SearchBar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/books/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery.length < 3) {
+      setError('Please enter a search term with at least 3 characters.');
+      return;
     }
+    setError('');
+    router.push(`/books/search?q=${encodeURIComponent(trimmedQuery)}`);
   };
 
   return (
@@ -29,6 +34,11 @@ export default function SearchBar() {
           <Search size={20} />
         </button>
       </form>
+      {error && (
+        <p className="text-lg font-semibold text-red-500 mt-4 text-center">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

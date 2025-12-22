@@ -1,4 +1,4 @@
-import { searchBooks } from '../services/bookService';
+import { searchBooks, fetchFictionBooks } from '../services/bookService';
 import BookCard from './BookCard';
 import SortSelector from './SortSelector';
 
@@ -8,18 +8,32 @@ interface BookGridProps {
 
 export default async function BookGrid({ searchParams }: BookGridProps) {
   const params = await searchParams;
-  const query = params.q || '';
+  const query = params.q;
+  console.log(query);
   const sort = params.sort || 'rating';
 
   let books: any[] = [];
+  
+  try {
+    books = await searchBooks(query, 20, sort);
+  } catch (err) {
+    console.error('Error fetching books:', err);
+  }
 
-  if (query) {
-    try {
-      books = await searchBooks(query, 20, sort);
-    } catch (err) {
-      // For now, just log the error - we could add error handling later
-      console.error('Error fetching books:', err);
-    }
+  if (books.length === 0) {
+    return (
+      <div>
+        {/* {query && <SortSelector currentSort={sort} />} */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl">
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">No books found</div>
+            <div className="text-gray-500 text-sm">
+              Try adjusting your search terms or check for typos
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

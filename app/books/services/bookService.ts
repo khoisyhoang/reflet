@@ -45,6 +45,44 @@ export interface SearchResult {
 }
 
 /**
+ * Fetch fiction books when no search query is provided
+ * @param limit - Maximum number of results to return (default: 50)
+ * @returns Promise<Book[]> - Array of book objects
+ * @throws Error when API call fails or returns error
+ */
+export async function fetchFictionBooks(limit: number = 50): Promise<Book[]> {
+  try {
+    const response = await fetch(`https://openlibrary.org/subjects/self-help.json?limit=${limit}&sort=rating`);
+
+    const data: any = await response.json();
+
+    // Check for API error in response
+    if (data.error) {
+      throw new Error(`OpenLibrary API error: ${data.error}`);
+    }
+
+    // Handle API response with error message
+    if (data.message && typeof data.message === 'string') {
+      throw new Error(`Failed to fetch fiction books: ${data.message}`);
+    }
+
+    const books = Array.isArray(data.works) ? data.works : [];
+
+    // Additional validation - check if response has expected structure
+    if (books.length === 0 && data.size === undefined) {
+      throw new Error('Invalid response format from OpenLibrary API');
+    }
+
+    return books;
+  } catch (error) {
+    // Re-throw with more context if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
+    }
+    throw error;
+  }
+}
+/**
  * Search for books using OpenLibrary API
  * @param query - The search query string
  * @param limit - Maximum number of results to return (default: 20)
@@ -52,14 +90,15 @@ export interface SearchResult {
  * @returns Promise<Book[]> - Array of book objects
  * @throws Error when API call fails or returns error
  */
-export async function searchBooks(query: string, limit: number = 20, sort: string = 'rating'): Promise<Book[]> {
-  if (!query.trim()) {
-    throw new Error('Search query cannot be empty');
+export async function searchBooks(query: string | undefined, limit: number = 20, sort: string = 'rating'): Promise<Book[]> {
+  if (!query || !query.trim()) {
+    query = 'atomic';
   }
 
   try {
     // Build URL with sort parameter
     let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=*,editions`;
+    console.log(url);
     
     if (sort) {
       url += `&sort=${encodeURIComponent(sort)}`;
