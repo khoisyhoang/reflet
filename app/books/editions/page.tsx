@@ -1,4 +1,4 @@
-import { fetchWorkEditions, fetchWork } from '../../services/bookService';
+import { fetchWorkEditions, fetchWork } from '../services/bookService';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -40,7 +40,7 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/books/search"
+            href="/search"
             className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             ← Back to Search Results

@@ -38,7 +38,7 @@ export default async function DetailPage({ searchParams }: DetailPageProps) {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/books/search"
+            href="/search"
             className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             ← Back to Search Results
@@ -156,7 +156,7 @@ export default async function DetailPage({ searchParams }: DetailPageProps) {
                   </Link>
 
                   <Link
-                    href={`/books/search/editions?work=${workId}`}
+                    href={`/books/editions?work=${workId}`}
                     className="bg-primary/80 hover:bg-primary text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     Change Editions

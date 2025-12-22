@@ -31,7 +31,7 @@ export default function SortSelector({ currentSort }: SortSelectorProps) {
     setSortValue(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set('sort', value);
-    router.push(`/books/search?${params.toString()}`);
+    router.push(`/search?${params.toString()}`);
   };
 
   return (

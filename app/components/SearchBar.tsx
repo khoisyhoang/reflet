@@ -17,7 +17,7 @@ export default function SearchBar() {
       return;
     }
     setError('');
-    router.push(`/books/search?q=${encodeURIComponent(trimmedQuery)}`);
+    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
   };
 
   return (

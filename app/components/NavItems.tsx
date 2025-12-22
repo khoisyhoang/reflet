@@ -14,7 +14,7 @@ export default function NavItems() {
       icon: Home,
     },
     {
-      href: '/books/search',
+      href: '/search',
       label: 'Book Search',
       icon: Search,
     },
