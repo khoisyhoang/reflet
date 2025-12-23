@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Orbitron } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 
@@ -9,10 +9,10 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const orbitron = Orbitron({
-  variable: "--font-orbitron",
+const playfair_display = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${orbitron.variable} antialiased`}
+        className={`${inter.variable} ${playfair_display.variable} antialiased`}
       >
         <Navbar />
         {children}

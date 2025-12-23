@@ -35,6 +35,14 @@ export interface Work {
   key: string;
   title: string;
   covers?: number[];
+  description?: string | { type: string; value: string };
+  subjects?: string[];
+  subject_places?: string[];
+  subject_times?: string[];
+  subject_people?: string[];
+  links?: Array<{ title: string; url: string }>;
+  first_publish_date?: string;
+  authors?: Array<{ author: { key: string }; type: { key: string } }>;
   // Add other fields as needed
 }
 
