@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import SearchBar from '../components/SearchBar';
-import BookGrid from '../books/components/BookGrid';
-import BookGridSkeleton from '../books/components/BookGridSkeleton';
+import BookGrid from './components/BookGrid';
+import BookGridSkeleton from './components/BookGridSkeleton';
 
 interface SearchPageProps {
   searchParams: Promise<{ [key: string]: string | undefined }>;

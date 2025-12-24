@@ -1,4 +1,4 @@
-import { searchBooks, fetchFictionBooks } from '../services/bookService';
+import { searchBooks } from '@/app/books/services/bookService';
 import BookCard from './BookCard';
 import SortSelector from './SortSelector';
 
@@ -9,7 +9,6 @@ interface BookGridProps {
 export default async function BookGrid({ searchParams }: BookGridProps) {
   const params = await searchParams;
   const query = params.q;
-  console.log(query);
   const sort = params.sort || 'rating';
 
   let books: any[] = [];

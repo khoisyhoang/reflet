@@ -4,12 +4,15 @@ import { fetchWorkEditions, fetchWork, fetchEdition } from '../services/bookServ
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+
 interface DetailPageProps {
+  params: Promise<{ workid: string }>;
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }
 
-export default function DetailPage({ searchParams }: DetailPageProps) {
-  const [params, setParams] = useState<{ [key: string]: string | undefined }>({});
+export default function DetailPage({ params, searchParams }: DetailPageProps) {
+  const [paramsData, setParamsData] = useState<{ workid: string }>({ workid: '' });
+  const [searchParamsData, setSearchParamsData] = useState<{ [key: string]: string | undefined }>({});
   const [edition, setEdition] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [workTitle, setWorkTitle] = useState('');
@@ -28,14 +31,15 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
   const [isLiked, setIsLiked] = useState<boolean>(false);
 
   useEffect(() => {
-    searchParams.then(setParams);
-  }, [searchParams]);
+    params.then(setParamsData);
+    searchParams.then(setSearchParamsData);
+  }, [params, searchParams]);
 
   useEffect(() => {
-    if (params.work) {
-      fetchData(params.work, params.edition);
+    if (paramsData.workid) {
+      fetchData(paramsData.workid, searchParamsData.edition);
     }
-  }, [params]);
+  }, [paramsData, searchParamsData]);
 
   const fetchData = async (workId: string, editionId?: string) => {
     try {
@@ -45,7 +49,7 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
       setWorkDescription(work.description ? 
         (typeof work.description === 'string' ? work.description : work.description.value) : null);
       setWorkSubjects(work.subjects || []);
-      setWorkFirstPublishDate(work.first_publish_year?.toString() || null);
+      setWorkFirstPublishDate(work.first_publish_year ? work.first_publish_year.toString() : null);
 
       let selectedEdition;
       if (editionId) {
@@ -75,7 +79,7 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
     }
   };
 
-  const workId = params.work || '';
+  const workId = paramsData.workid;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary/20 to-secondary/20 text-white font-sans">
@@ -216,20 +220,20 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
 
                 {/* Edition Info */}
                 <div className="text-lg text-gray-400 mt-2">
-                  {params.edition ? (
+                  {searchParamsData.edition ? (
                     <>Viewing this specific edition</>
                   ) : (
                     <>
                       An edition of{' '}
                       <Link
-                        href={`/books/editions?work=${params.work}`}
+                        href={`/books/${workId}/editions`}
                         className="text-blue-400 hover:text-blue-300 underline"
                       >
                         {workTitle || 'this work'}
                       </Link>
                       ,{' '}
                       <Link
-                        href={`/books/editions?work=${params.work}`}
+                        href={`/books/${workId}/editions`}
                         className="text-blue-400 hover:text-blue-300 underline"
                       >
                         view editions

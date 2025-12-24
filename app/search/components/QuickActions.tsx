@@ -23,7 +23,7 @@ export default function QuickActions({ workId }: QuickActionsProps) {
             <button
                 onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
-                    router.push(`/books/editions?work=${workId}`);
+                    router.push(`/books/${workId}/editions`);
                 }}
                 className="bg-primary/80 hover:bg-primary text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >

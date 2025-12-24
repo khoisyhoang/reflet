@@ -21,7 +21,7 @@ interface BookCardProps {
 
 export default function BookCard({ book, index }: BookCardProps) {
   return (
-    <Link href={`/books/detail?work=${book.key.replace('/works/', '')}`} className="group block">
+    <Link href={`/books/${book.key.replace('/works/', '')}`} className="group block">
       <div className="bg-white/5 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/10">
         <div className="flex">
           {/* Book Cover */}
