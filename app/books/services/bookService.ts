@@ -28,6 +28,9 @@ export interface Edition {
   number_of_pages?: number;
   covers?: number[];
   languages?: string[];
+  physical_format?: string;
+  weight?: string;
+  dimensions?: string[];
   // Add other fields as needed
 }
 
@@ -213,6 +216,42 @@ export async function fetchWork(workId: string): Promise<Work> {
     // Handle API response with error message
     if (data.message && typeof data.message === 'string') {
       throw new Error(`Failed to fetch work: ${data.message}`);
+    }
+
+    return data;
+  } catch (error) {
+    // Re-throw with more context if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Fetch a specific edition
+ * @param editionId - The edition ID (e.g., 'OL7353617M')
+ * @returns Promise<Edition> - Edition object
+ * @throws Error when API call fails or returns error
+ */
+export async function fetchEdition(editionId: string): Promise<Edition> {
+  if (!editionId) {
+    throw new Error('Edition ID cannot be empty');
+  }
+
+  try {
+    const response = await fetch(`https://openlibrary.org/books/${editionId}.json`);
+
+    const data: any = await response.json();
+
+    // Check for API error in response
+    if (data.error) {
+      throw new Error(`OpenLibrary API error: ${data.error}`);
+    }
+
+    // Handle API response with error message
+    if (data.message && typeof data.message === 'string') {
+      throw new Error(`Failed to fetch edition: ${data.message}`);
     }
 
     return data;

@@ -115,102 +115,162 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="space-y-4">
                 {editions.map((edition, index) => (
                   <div key={edition.key || index} className="group">
-                    <div className="bg-white/5 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/10">
-                      {/* Edition Cover */}
-                      <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
-                        {edition.covers && edition.covers.length > 0 ? (
-                          <Image
-                            src={`https://covers.openlibrary.org/b/id/${edition.covers[0]}-L.jpg`}
-                            alt={`Cover of ${edition.title || 'Edition'}`}
-                            fill
-                            className="object-contain group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center relative">
-                            {/* Book-like rectangle */}
-                            <div className="absolute inset-4 border-4 border-primary/30 rounded-lg shadow-lg bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center p-4 text-center">
-                              {/* Book spine effect */}
-                              <div className="absolute left-0 top-0 bottom-0 w-2 bg-primary/40 rounded-l-lg"></div>
-                              
-                              <h3 className="font-heading font-bold text-foreground text-lg mb-2 leading-tight">
-                                {edition.title || 'Untitled Edition'}
-                              </h3>
-                              {edition.publishers && edition.publishers.length > 0 && (
-                                <p className="text-sm text-muted-foreground leading-tight">
-                                  {edition.publishers[0]}
-                                </p>
+                    <div className="bg-white/5 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/10">
+                      <div className="flex flex-col md:flex-row">
+                        {/* Edition Cover */}
+                        <div className="md:w-48 flex-shrink-0 p-4">
+                          <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
+                            {edition.covers && edition.covers.length > 0 ? (
+                              <Image
+                                src={`https://covers.openlibrary.org/b/id/${edition.covers[0]}-L.jpg`}
+                                alt={`Cover of ${edition.title || 'Edition'}`}
+                                fill
+                                className="object-contain group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center relative">
+                                {/* Book-like rectangle */}
+                                <div className="absolute inset-2 border-4 border-primary/30 rounded-lg shadow-lg bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center p-4 text-center">
+                                  {/* Book spine effect */}
+                                  <div className="absolute left-0 top-0 bottom-0 w-2 bg-primary/40 rounded-l-lg"></div>
+                                  
+                                  <h3 className="font-heading font-bold text-foreground text-sm mb-2 leading-tight">
+                                    {edition.title || 'Untitled Edition'}
+                                  </h3>
+                                  {edition.publishers && edition.publishers.length > 0 && (
+                                    <p className="text-xs text-muted-foreground leading-tight">
+                                      {edition.publishers[0]}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Edition Details */}
+                        <div className="flex-1 p-6">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between h-full">
+                            <div className="flex-1 space-y-4">
+                              {/* Title and Publisher */}
+                              <div>
+                                <h3 className="font-heading font-bold text-foreground text-xl mb-2 group-hover:text-primary transition-colors leading-tight">
+                                  {edition.title || 'Untitled Edition'}
+                                </h3>
+                                {edition.publishers && edition.publishers.length > 0 && (
+                                  <p className="text-sm text-muted-foreground font-medium">
+                                    by {edition.publishers.join(', ')}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Key Details Grid */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {edition.publish_date && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
+                                    <span className="text-muted-foreground">Published:</span>
+                                    <span className="font-medium text-foreground">{edition.publish_date}</span>
+                                  </div>
+                                )}
+                                {edition.number_of_pages && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
+                                    <span className="text-muted-foreground">Pages:</span>
+                                    <span className="font-medium text-foreground">{edition.number_of_pages}</span>
+                                  </div>
+                                )}
+                                {edition.languages && edition.languages.length > 0 && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
+                                    <span className="text-muted-foreground">Language:</span>
+                                    <span className="font-medium text-foreground">
+                                      {edition.languages.map((lang: any) =>
+                                        typeof lang === 'string' ? lang.toUpperCase() :
+                                        (lang.key || '').replace('/languages/', '').toUpperCase()
+                                      ).join(', ')}
+                                    </span>
+                                  </div>
+                                )}
+                                {edition.physical_format && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
+                                    <span className="text-muted-foreground">Format:</span>
+                                    <span className="font-medium text-foreground">{edition.physical_format}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* ISBN Section */}
+                              {(edition.isbn_10 || edition.isbn_13) && (
+                                <div className="bg-muted/20 rounded-lg p-3 border border-muted/30">
+                                  <div className="text-xs text-muted-foreground mb-2 font-medium">ISBN</div>
+                                  <div className="space-y-1">
+                                    {edition.isbn_13 && edition.isbn_13.length > 0 && (
+                                      <div className="text-sm font-mono text-foreground">
+                                        ISBN-13: {edition.isbn_13[0]}
+                                      </div>
+                                    )}
+                                    {edition.isbn_10 && edition.isbn_10.length > 0 && (
+                                      <div className="text-sm font-mono text-foreground">
+                                        ISBN-10: {edition.isbn_10[0]}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Additional Details */}
+                              {(edition.weight || (edition.dimensions && edition.dimensions.length > 0)) && (
+                                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                                  {edition.weight && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-medium">Weight:</span>
+                                      <span>{edition.weight}</span>
+                                    </div>
+                                  )}
+                                  {edition.dimensions && edition.dimensions.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-medium">Dimensions:</span>
+                                      <span>{edition.dimensions.join(' × ')}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col gap-2 mt-4 md:mt-0 md:ml-6">
+                              <Link
+                                href={`/books/detail?work=${workId}&edition=${edition.key.replace('/books/', '')}`}
+                                className="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors text-center"
+                              >
+                                Switch to this Edition
+                              </Link>
+                              <Link
+                                href={`https://openlibrary.org/${edition.key}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg text-sm font-medium backdrop-blur-sm transition-colors text-center"
+                              >
+                                View on Open Library
+                              </Link>
+                              {edition.isbn_13 && edition.isbn_13.length > 0 && (
+                                <Link
+                                  href={`https://www.worldcat.org/isbn/${edition.isbn_13[0]}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-blue-600/80 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors text-center"
+                                >
+                                  Find in Libraries
+                                </Link>
                               )}
                             </div>
                           </div>
-                        )}
-
-                        {/* Overlay with actions */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                          <div className="flex flex-col gap-2 text-center">
-                            <Link
-                              href={`https://openlibrary.org/${edition.key}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-sm transition-colors"
-                            >
-                              View Details
-                            </Link>
-                            {edition.isbn_13 && edition.isbn_13.length > 0 && (
-                              <Link
-                                href={`https://www.worldcat.org/isbn/${edition.isbn_13[0]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-primary/80 hover:bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                              >
-                                Find in Libraries
-                              </Link>
-                            )}
-                          </div>
                         </div>
-                      </div>
-
-                      {/* Edition Info */}
-                      <div className="p-4">
-                        <h3 className="font-heading font-bold text-foreground text-lg mb-2 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-primary transition-colors">
-                          {edition.title || 'Untitled Edition'}
-                        </h3>
-
-                        {edition.publishers && edition.publishers.length > 0 && (
-                          <p className="text-sm text-muted-foreground mb-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                            {edition.publishers.join(', ')}
-                          </p>
-                        )}
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                          {edition.publish_date && (
-                            <span>{edition.publish_date}</span>
-                          )}
-                          {edition.number_of_pages && (
-                            <span>{edition.number_of_pages} pages</span>
-                          )}
-                        </div>
-
-                        {edition.languages && edition.languages.length > 0 && (
-                          <div className="mb-2">
-                            <span className="text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded-full">
-                              {edition.languages.map((lang: any) =>
-                                typeof lang === 'string' ? lang.toUpperCase() :
-                                (lang.key || '').replace('/languages/', '').toUpperCase()
-                              ).join(', ')}
-                            </span>
-                          </div>
-                        )}
-
-                        {(edition.isbn_10 || edition.isbn_13) && (
-                          <div className="text-xs text-muted-foreground">
-                            {edition.isbn_13 && edition.isbn_13.length > 0 && (
-                              <span>ISBN: {edition.isbn_13[0]}</span>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

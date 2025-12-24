@@ -1,6 +1,6 @@
 'use client'; // Added for client-side interactivity like show more toggles and rating inputs
 
-import { fetchWorkEditions, fetchWork } from '../services/bookService';
+import { fetchWorkEditions, fetchWork, fetchEdition } from '../services/bookService';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -26,6 +26,7 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
   const [showFullAuthorBio, setShowFullAuthorBio] = useState(false);
   const [userRating, setUserRating] = useState<number>(0);
   const [wantToReadStatus, setWantToReadStatus] = useState<string>('Want to Read');
+  const [isLiked, setIsLiked] = useState<boolean>(false);
 
   useEffect(() => {
     searchParams.then(setParams);
@@ -33,11 +34,11 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
 
   useEffect(() => {
     if (params.work) {
-      fetchData(params.work);
+      fetchData(params.work, params.edition);
     }
   }, [params]);
 
-  const fetchData = async (workId: string) => {
+  const fetchData = async (workId: string, editionId?: string) => {
     try {
       const work = await fetchWork(workId);
       setWorkTitle(work.title || 'Unknown Work');
@@ -47,15 +48,26 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
       setWorkSubjects(work.subjects || []);
       setWorkFirstPublishDate(work.first_publish_date || null);
 
-      const editions = await fetchWorkEditions(workId, 1);
-      if (editions.length > 0) {
-        setEdition(editions[0]);
+      let selectedEdition;
+      if (editionId) {
+        // Fetch the specific edition
+        selectedEdition = await fetchEdition(editionId);
+      } else {
+        // Fetch the first edition of the work
+        const editions = await fetchWorkEditions(workId, 1);
+        if (editions.length > 0) {
+          selectedEdition = editions[0];
+        }
       }
 
-      if (work.authors && (editions[0] as any)?.author_name) {
+      if (selectedEdition) {
+        setEdition(selectedEdition);
+      }
+
+      if (work.authors && selectedEdition && (selectedEdition as any)?.author_name) {
         const authors = work.authors.map((authorRef, index) => ({
           key: authorRef.author.key,
-          name: (editions[0] as any).author_name[index] || ''
+          name: (selectedEdition as any).author_name[index] || ''
         }));
         setWorkAuthors(authors);
       }
@@ -171,6 +183,23 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
                     <p className="text-xs text-gray-400">You rated this {userRating} star{userRating !== 1 ? 's' : ''}</p>
                   )}
                 </div>
+
+                {/* Like Button */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setIsLiked(!isLiked)}
+                    className={`w-full px-4 py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
+                      isLiked
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {isLiked ? 'Liked' : 'Like'}
+                  </button>
+                </div>
               </div>
 
               {/* Main Content */}
@@ -185,6 +214,30 @@ export default function DetailPage({ searchParams }: DetailPageProps) {
                 <h1 className="text-4xl lg:text-5xl font-bold text-white">
                   {edition.title || 'Untitled Edition'}
                 </h1>
+
+                {/* Edition Info */}
+                <div className="text-lg text-gray-400 mt-2">
+                  {params.edition ? (
+                    <>Viewing this specific edition</>
+                  ) : (
+                    <>
+                      An edition of{' '}
+                      <Link
+                        href={`/books/editions?work=${params.work}`}
+                        className="text-blue-400 hover:text-blue-300 underline"
+                      >
+                        {workTitle || 'this work'}
+                      </Link>
+                      ,{' '}
+                      <Link
+                        href={`/books/editions?work=${params.work}`}
+                        className="text-blue-400 hover:text-blue-300 underline"
+                      >
+                        view editions
+                      </Link>
+                    </>
+                  )}
+                </div>
 
                 {/* Author */}
                 {edition.author_name && edition.author_name.length > 0 && (
