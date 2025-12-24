@@ -49,6 +49,10 @@ export async function searchBooks(query: string | undefined, limit: number = 20,
 
     const response = await fetch(url);
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data: any = await response.json();
 
     // Check for API error in response
@@ -56,17 +60,7 @@ export async function searchBooks(query: string | undefined, limit: number = 20,
       throw new Error(`OpenLibrary API error: ${data.error}`);
     }
 
-    // Handle API response with error message
-    if (data.message && typeof data.message === 'string') {
-      throw new Error(`Search failed: ${data.message}`);
-    }
-
     const books = Array.isArray(data.docs) ? data.docs : [];
-
-    // Additional validation - check if response has expected structure
-    if (books.length === 0 && data.numFound === undefined) {
-      throw new Error('Invalid response format from OpenLibrary API');
-    }
 
     return books;
   } catch (error) {
@@ -95,6 +89,10 @@ export async function fetchWorkEditions(workId: string, limit: number = 50): Pro
       `https://openlibrary.org/works/${workId}/editions.json?limit=${limit}`
     );
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data: any = await response.json();
 
     // Check for API error in response
@@ -102,17 +100,7 @@ export async function fetchWorkEditions(workId: string, limit: number = 50): Pro
       throw new Error(`OpenLibrary API error: ${data.error}`);
     }
 
-    // Handle API response with error message
-    if (data.message && typeof data.message === 'string') {
-      throw new Error(`Failed to fetch editions: ${data.message}`);
-    }
-
     const editions = Array.isArray(data.entries) ? data.entries : [];
-
-    // Additional validation - check if response has expected structure
-    if (editions.length === 0 && data.size === undefined) {
-      throw new Error('Invalid response format from OpenLibrary API');
-    }
 
     return editions;
   } catch (error) {
@@ -138,16 +126,15 @@ export async function fetchWork(workId: string): Promise<Work> {
   try {
     const response = await fetch(`https://openlibrary.org/works/${workId}.json`);
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data: any = await response.json();
 
     // Check for API error in response
     if (data.error) {
       throw new Error(`OpenLibrary API error: ${data.error}`);
-    }
-
-    // Handle API response with error message
-    if (data.message && typeof data.message === 'string') {
-      throw new Error(`Failed to fetch work: ${data.message}`);
     }
 
     return data;
@@ -174,16 +161,15 @@ export async function fetchEdition(editionId: string): Promise<Edition> {
   try {
     const response = await fetch(`https://openlibrary.org/books/${editionId}.json`);
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data: any = await response.json();
 
     // Check for API error in response
     if (data.error) {
       throw new Error(`OpenLibrary API error: ${data.error}`);
-    }
-
-    // Handle API response with error message
-    if (data.message && typeof data.message === 'string') {
-      throw new Error(`Failed to fetch edition: ${data.message}`);
     }
 
     return data;
