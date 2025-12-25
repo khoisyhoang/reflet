@@ -3,6 +3,8 @@ import { Search, Brain, BookOpen, Zap, Target, Sparkles, MessageSquare, Trending
 import SearchBar from './components/SearchBar';
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans relative overflow-hidden">
       {/* Background Effects */}
@@ -270,4 +272,4 @@ export default function Home() {
       </footer>
     </div>
   );
-}
+}  
