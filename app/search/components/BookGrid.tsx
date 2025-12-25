@@ -12,11 +12,13 @@ export default async function BookGrid({ searchParams }: BookGridProps) {
   const sort = params.sort || 'rating';
 
   let books: any[] = [];
+  let error: string | null = null;
   
   try {
     books = await searchBooks(query, 20, sort);
   } catch (err) {
     console.error('Error fetching books:', err);
+    error = err instanceof Error ? err.message : 'An unexpected error occurred';
   }
 
   if (books.length === 0) {
@@ -25,10 +27,19 @@ export default async function BookGrid({ searchParams }: BookGridProps) {
         {/* {query && <SortSelector currentSort={sort} />} */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl">
           <div className="text-center py-12">
-            <div className="text-gray-400 text-lg mb-2">No books found</div>
-            <div className="text-gray-500 text-sm">
-              Try adjusting your search terms or check for typos
-            </div>
+            {error ? (
+              <>
+                <div className="text-red-400 text-lg mb-2">Unable to load books</div>
+                <div className="text-gray-500 text-sm">{error}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-gray-400 text-lg mb-2">No books found</div>
+                <div className="text-gray-500 text-sm">
+                  Try adjusting your search terms or check for typos
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -64,11 +64,7 @@ export async function searchBooks(query: string | undefined, limit: number = 20,
 
     return books;
   } catch (error) {
-    // Re-throw with more context if it's a network error
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
-    }
-    throw error;
+    throw new Error('Unable to connect to OpenLibrary. Please check your internet connection, or perhaps OpenLibrary is down.');
   }
 }
 
@@ -104,11 +100,7 @@ export async function fetchWorkEditions(workId: string, limit: number = 50): Pro
 
     return editions;
   } catch (error) {
-    // Re-throw with more context if it's a network error
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
-    }
-    throw error;
+    throw new Error('Unable to connect to OpenLibrary. Please check your internet connection and try again.');
   }
 }
 
@@ -139,11 +131,7 @@ export async function fetchWork(workId: string): Promise<Work> {
 
     return data;
   } catch (error) {
-    // Re-throw with more context if it's a network error
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
-    }
-    throw error;
+    throw new Error('Unable to connect to OpenLibrary. Please check your internet connection and try again.');
   }
 }
 
@@ -174,10 +162,6 @@ export async function fetchEdition(editionId: string): Promise<Edition> {
 
     return data;
   } catch (error) {
-    // Re-throw with more context if it's a network error
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to OpenLibrary. Please check your internet connection.');
-    }
-    throw error;
+    throw new Error('Unable to connect to OpenLibrary. Please check your internet connection and try again.');
   }
 }
