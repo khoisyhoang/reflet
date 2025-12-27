@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import { AntdRegistry } from '@ant-design/nextjs-registry';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,7 +32,7 @@ export default function RootLayout({
         className={`${inter.variable} ${playfair_display.variable} antialiased`}
       >
         <Navbar />
-        {children}
+        <AntdRegistry>{children}</AntdRegistry>
       </body>
     </html>
   );
