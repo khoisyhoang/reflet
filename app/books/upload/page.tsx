@@ -1,75 +1,104 @@
 "use client";
 
-import { useRef } from 'react';
-import { InboxOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
-import { message, Upload, ConfigProvider, theme, App } from 'antd';
+import { useRef, useState } from 'react';
 import ePub from 'epubjs';
 
-const { Dragger } = Upload;
-
 export default function UploadPage() {
-
   const viewerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [epubBook, setEpubBook] = useState<any>(null);
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
 
-  const props: UploadProps = {
-    name: 'file',
-    accept: '.epub', // Accept only .epub files
-    onChange(info) {
-      const { status } = info.file;
-      if (status !== 'uploading') {
-        console.log(info.file, info.fileList);
-      }
-      // Since no action URL, treat selection as success for local processing
-      if (info.fileList.length > 0 && info.file.name.endsWith('.epub')) {
-        const file = info.file.originFileObj;
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const epubBook = ePub(arrayBuffer);
-            if (viewerRef.current) {
-              epubBook.renderTo(viewerRef.current, {
-                width: '100%',
-                height: '100%',
-              }).display();
-            }
-            message.success(`${info.file.name} file loaded and ready for reading.`);
-          };
-          reader.readAsArrayBuffer(file);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.name.endsWith('.epub')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const book = ePub(arrayBuffer);
+        setEpubBook(book);
+
+        if (viewerRef.current) {
+          const rendition = book.renderTo(viewerRef.current, {
+            flow: 'paginated',
+            width: '100%',
+            height: '100%',
+          });
+
+          rendition.display();
+
+          // Track location changes
+          rendition.on('relocated', (location: any) => {
+            setCurrentLocation(location.start.cfi);
+          });
+
+          console.log(`${file.name} file loaded and ready for reading.`);
         }
-      } else if (status === 'error') {
-        message.error(`${info.file.name} file upload failed.`);
-      }
-    },
-    onDrop(e) {
-      console.log('Dropped files', e.dataTransfer.files);
-    },
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      console.error('Please select a valid .epub file.');
+    }
   };
+
+  const navigateNext = () => {
+    if (epubBook?.rendition) {
+      epubBook.rendition.next();
+    }
+  };
+
+  const navigatePrev = () => {
+    if (epubBook?.rendition) {
+      epubBook.rendition.prev();
+    }
+  };
+
   return (
-    <App>
-      <ConfigProvider
-        theme={{
-          algorithm: theme.darkAlgorithm,
-          token: {
-            colorText: '#ffffff',
-            colorTextSecondary: '#aaaaaa',
-          },
-        }}
-      >
-        <div className="max-w-3xl mx-auto mb-8">
-          <Dragger {...props}>
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="ant-upload-text">Click or drag file to this area to upload</p>
-            <p className="ant-upload-hint">
-              Support for a single .epub file upload. Strictly prohibited from uploading company data or other banned files.
-            </p>
-          </Dragger>
+    <div>
+      <div className="max-w-3xl mx-auto mb-8">
+        <div
+          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="text-4xl mb-4">📁</div>
+          <p className="text-lg mb-2">Click to select file to upload</p>
+          <p className="text-sm text-gray-500">
+            Support for a single .epub file upload. Strictly prohibited from uploading company data or other banned files.
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".epub"
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
-        <div id="viewer" ref={viewerRef} className="max-w-3xl mx-auto" style={{ height: '600px', border: '1px solid #ccc' }}></div>
-      </ConfigProvider>
-    </App>
+      </div>
+
+      {/* Navigation Controls */}
+      {epubBook && (
+        <div className="max-w-3xl mx-auto mb-4 flex justify-center items-center gap-4">
+          <button
+            onClick={navigatePrev}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+            disabled={!currentLocation}
+          >
+            ← Previous
+          </button>
+          <span className="text-sm text-gray-600">
+            {currentLocation ? 'Reading...' : 'Loading...'}
+          </span>
+          <button
+            onClick={navigateNext}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+            disabled={!currentLocation}
+          >
+            Next →
+          </button>
+        </div>
+      )}
+
+      <div id="viewer" ref={viewerRef} className="max-w-3xl mx-auto bg-white" style={{ height: '600px', border: '1px solid #ccc' }}></div>
+    </div>
   );
 }
