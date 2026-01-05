@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
-import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { NuqsAdapter } from 'nuqs/adapters/next'
+import { ThemeProvider } from "next-themes";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,12 +28,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${playfair_display.variable} antialiased`}
       >
         <Navbar />
-        <AntdRegistry>{children}</AntdRegistry>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <NuqsAdapter>
+            {children}
+          </NuqsAdapter>
+        </ThemeProvider>
       </body>
     </html>
   );
