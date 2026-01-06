@@ -32,8 +32,8 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair_display.variable} antialiased`}
       >
-        <Navbar />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Navbar />
           <NuqsAdapter>
             {children}
           </NuqsAdapter>
