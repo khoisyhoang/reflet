@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/Navbar";
+import ConditionalNavbar from "./components/ConditionalNavbar";
 import { NuqsAdapter } from 'nuqs/adapters/next'
 import { ThemeProvider } from "next-themes";
 
@@ -33,7 +33,7 @@ export default function RootLayout({
         className={`${inter.variable} ${playfair_display.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Navbar />
+          <ConditionalNavbar />
           <NuqsAdapter>
             {children}
           </NuqsAdapter>

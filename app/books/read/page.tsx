@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import ePub from 'epubjs'
 import { useQueryState } from 'nuqs'
+import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ChevronLeft, ChevronRight, MessageCircle, X, Bot, StickyNote, Copy } from 'lucide-react'
+import AiChatPanel from './components/AiChatPanel'
 
 interface TocItem {
   label: string
@@ -30,6 +35,10 @@ export default function ReadPage() {
   const [toc, setToc] = useState<TocItem[]>([])
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null)
   const [totalLocations, setTotalLocations] = useState(0)
+  const [showAiChat, setShowAiChat] = useState(false)
+  const [showHighlightMenu, setShowHighlightMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [selectedText, setSelectedText] = useState('')
   const renditionRef = useRef<any>(null)
   const viewerRef = useRef<HTMLDivElement | null>(null)
   const currentCfiRef = useRef<string | null>(null)
@@ -38,7 +47,6 @@ export default function ReadPage() {
     if (!viewerRef.current) return
 
     const book = ePub('/pom.epub')
-    console.log("book", book);
     setEpubBook(book)
 
     book.loaded.metadata.then((meta) => {
@@ -55,6 +63,7 @@ export default function ReadPage() {
       flow: 'paginated',
       spread: 'none'
     })
+    
     renditionRef.current = rendition
 
     rendition.on('relocated', (location: Location) => {
@@ -65,8 +74,37 @@ export default function ReadPage() {
       }
     })
 
-    book.locations.generate(1000).then(() => {
-      setTotalLocations(book.locations.length())
+    rendition.on('selected', (cfiRange: string) => {
+      const range = rendition.getRange(cfiRange)
+      const rect = range.getBoundingClientRect()
+      const viewerRect = viewerRef.current?.getBoundingClientRect()
+      
+      if (viewerRect) {
+        const selectionCenterX = rect.left - viewerRect.left + rect.width / 2
+        const isNearTop = rect.top < 60
+        setMenuPosition({
+          x: selectionCenterX,
+          y: isNearTop ? rect.bottom + 5 : rect.top - 45
+        })
+      }
+      setSelectedText(range.toString())
+      setShowHighlightMenu(true)
+      rendition.annotations.remove(cfiRange, 'highlight');
+      rendition.annotations.add(
+        'highlight',
+        cfiRange,
+        {},
+        () => {
+        },
+        'hl-yellow'
+      )
+    })
+
+    book.ready.then(() => {
+      book.locations.generate(1000).then(() => {
+        console.log("locations:", book.locations.length())
+        setTotalLocations(book.locations.length())
+      })
     })
 
     return () => {
@@ -105,18 +143,16 @@ export default function ReadPage() {
 
   return (
     <Sheet>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 ">
         {/* Main Reading Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <header className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <SheetTrigger asChild>
-                <button
-                  className="mr-4 text-2xl focus:outline-none text-gray-900 dark:text-gray-100"
-                >
+                <Button variant="ghost" size="icon">
                   ☰
-                </button>
+                </Button>
               </SheetTrigger>
               <h1 className="text-xl font-bold truncate text-gray-900 dark:text-gray-100">{metadata.title || 'Loading...'}</h1>
             </div>
@@ -125,30 +161,124 @@ export default function ReadPage() {
             </div>
           </header>
 
-          {/* Viewer */}
-          <div
-            ref={viewerRef}
-            className="flex-1 overflow-hidden"
-            style={{ height: 'calc(100vh - 140px)' }}
-          />
+          {/* Viewer and AI Chat */}
+          <ResizablePanelGroup orientation="horizontal" className="flex-1">
+            <ResizablePanel defaultSize={showAiChat ? 70 : 100} minSize={20} className="flex flex-col">
+              {/* Viewer */}
+              <div className="relative flex-1 overflow-hidden max-w-screen">
+                <div
+                  ref={viewerRef}
+                  className="w-full h-full"
+                />
+                <Button
+                  onClick={handlePrev}
+                  disabled={!currentLocation || currentLocation.atStart}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 border-0"
+                  size="icon"
+                >
+                  <ChevronLeft />
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={!currentLocation || currentLocation.atEnd}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 border-0"
+                  size="icon"
+                >
+                  <ChevronRight />
+                </Button>
+                <Button
+                  onClick={() => setShowAiChat(!showAiChat)}
+                  className="absolute top-4 right-4 bg-black/50 text-white hover:bg-black/70 border-0"
+                  size="icon"
+                >
+                  <MessageCircle />
+                </Button>
+                {showHighlightMenu && (
+                  <div
+                    className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-1 flex gap-1 -translate-x-1/2"
+                    style={{ left: menuPosition.x, top: menuPosition.y }}
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setShowAiChat(true)
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <Bot className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Ask AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowHighlightMenu(false)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Close</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              console.log('Add notes', selectedText)
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <StickyNote className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add Notes</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedText)
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
+              </div>
+            </ResizablePanel>
 
-          {/* Controls */}
-          <div className="flex justify-center items-center p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={handlePrev}
-              className="mx-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!currentLocation || currentLocation.atStart}
-            >
-              ← Previous
-            </button>
-            <button
-              onClick={handleNext}
-              className="mx-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!currentLocation || currentLocation.atEnd}
-            >
-              Next →
-            </button>
-          </div>
+            {showAiChat && (
+              <>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={30} minSize={20} collapsible className="flex flex-col">
+                  <AiChatPanel />
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
         </div>
       </div>
 
@@ -163,22 +293,25 @@ export default function ReadPage() {
           <ul className="p-4">
             {toc.map((item, index) => (
               <li key={index} className="mb-2">
-                <button
+                <Button
                   onClick={() => handleTocClick(item.href)}
-                  className="text-left hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded w-full text-gray-900 dark:text-gray-100"
+                  variant="ghost"
+                  className="text-left w-full justify-start"
                 >
                   {item.label}
-                </button>
+                </Button>
                 {item.subitems && item.subitems.length > 0 && (
                   <ul className="ml-4 mt-1">
                     {item.subitems.map((subitem, subindex) => (
                       <li key={subindex}>
-                        <button
+                        <Button
                           onClick={() => handleTocClick(subitem.href)}
-                          className="text-left hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded w-full text-sm text-gray-900 dark:text-gray-100"
+                          variant="ghost"
+                          size="sm"
+                          className="text-left w-full justify-start ml-4"
                         >
                           {subitem.label}
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>
