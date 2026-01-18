@@ -42,6 +42,84 @@ export default function ReadPage() {
   const renditionRef = useRef<any>(null)
   const viewerRef = useRef<HTMLDivElement | null>(null)
   const currentCfiRef = useRef<string | null>(null)
+  const highlightsRef = useRef<{ cfi: string, range: Range }[]>([])
+  const [highlights, setHighlights] = useState<{ cfi: string, range: Range }[]>([])
+
+  function rangesOverlap(a: Range, b: Range) {
+    if (!a || !b) return false;
+
+    return (
+      a.compareBoundaryPoints(Range.END_TO_START, b) === -1 &&
+      a.compareBoundaryPoints(Range.START_TO_END, b) === 1
+    );
+  }
+
+  const mergeCFIs = (rendition: any, cfiA: string, cfiB: string): string | null => {
+    // A: current selected cfi
+    // B: overlapping highlight cfi
+
+    const a = rendition.getRange(cfiA)
+    const b = rendition.getRange(cfiB)
+    if (!a || !b) return null
+
+    const merged = document.createRange()
+
+    // start
+    if (a.compareBoundaryPoints(Range.START_TO_START, b) <= 0) {
+      merged.setStart(a.startContainer, a.startOffset)
+      console.log("a starts before b")
+    } else {
+      merged.setStart(b.startContainer, b.startOffset)
+      console.log("b starts before a")
+    }
+
+    // end
+    if (a.compareBoundaryPoints(Range.END_TO_END, b) >= 0) {
+      merged.setEnd(a.endContainer, a.endOffset)
+      console.log("a ends after b")
+    } else {
+      merged.setEnd(b.endContainer, b.endOffset)
+      console.log("b ends after a")
+    }
+
+    // Get CFI base from the current section
+    const contents = rendition.getContents()[0]
+    if (!contents) return null
+
+    // Convert merged range to CFI string using the book's CFI generator
+    const mergedCfi = contents.cfiFromRange(merged)
+    console.log("mergedCfi", mergedCfi)
+    return mergedCfi  
+  }
+
+  const handleHighlightMerging = (rendition: any, selectedCfi: string, range: Range, highlights: { cfi: string, range: Range }[]) => {
+    console.log("gau gau", highlights)
+    // search in current hightlights, whether there is any overlap with our current selection
+    const existingOverlappingHighlights = highlights.filter(h => rangesOverlap(h.range, range))
+
+    if (existingOverlappingHighlights.length > 0) {
+      console.log("existingOverlappingHighlights", existingOverlappingHighlights);
+      let finalMergedCfi = selectedCfi
+      // Processing all overlapping highlights
+      for (const highlight of existingOverlappingHighlights) {
+        // Pass in -current selected cfi and -overlapping highlight cfi
+        const tempMergedCfi = mergeCFIs(rendition, finalMergedCfi, highlight.cfi)
+        if (tempMergedCfi) finalMergedCfi = tempMergedCfi
+      }
+      const finalMergedRange = rendition.getRange(finalMergedCfi)
+      return {
+        finalCfi: finalMergedCfi,
+        finalRange: finalMergedRange,
+        highlightsToRemove: existingOverlappingHighlights
+      }
+    } else {
+      return {
+        finalCfi: selectedCfi,
+        finalRange: range,
+        highlightsToRemove: []
+      }
+    }
+  }
 
   useEffect(() => {
     if (!viewerRef.current) return
@@ -63,7 +141,7 @@ export default function ReadPage() {
       flow: 'paginated',
       spread: 'none'
     })
-    
+
     renditionRef.current = rendition
 
     rendition.on('relocated', (location: Location) => {
@@ -74,32 +152,47 @@ export default function ReadPage() {
       }
     })
 
-    rendition.on('selected', (cfiRange: string) => {
-      const range = rendition.getRange(cfiRange)
-      const rect = range.getBoundingClientRect()
+    // Handle text selection / highlight in the ePub viewer
+    rendition.on('selected', (selectedCfi: string) => {
+      console.log("selectedCfi", selectedCfi);
+      const currentRange = rendition.getRange(selectedCfi)
+      const rect = currentRange.getBoundingClientRect()
       const viewerRect = viewerRef.current?.getBoundingClientRect()
-      
+
       if (viewerRect) {
+        // Calculate horizontal center of selection relative to viewer
         const selectionCenterX = rect.left - viewerRect.left + rect.width / 2
+        // Position menu below if near top, above otherwise
         const isNearTop = rect.top < 60
         setMenuPosition({
           x: selectionCenterX,
           y: isNearTop ? rect.bottom + 5 : rect.top - 45
         })
       }
-      setSelectedText(range.toString())
+      setSelectedText(currentRange.toString())
       setShowHighlightMenu(true)
-      rendition.annotations.remove(cfiRange, 'highlight');
-      rendition.annotations.add(
-        'highlight',
-        cfiRange,
-        {},
-        () => {
-        },
-        'hl-yellow'
-      )
-    })
 
+      // Handle highlight merging and addition
+      console.log("momentbeforegaugau", highlightsRef.current)
+      const result = handleHighlightMerging(rendition, selectedCfi, currentRange, highlightsRef.current)
+      console.log("result", result);
+      result.highlightsToRemove.forEach(highlight => rendition.annotations.remove(highlight.cfi, 'highlight'))
+      // settimeout
+      setTimeout(() => {
+        rendition.annotations.add('highlight', result.finalCfi, {}, () => { }, 'hl-yellow')
+      }, 1000)
+      
+      setHighlights(prev => {
+        const filtered = prev.filter(highlight => !result.highlightsToRemove.some(removed => removed.cfi === highlight.cfi))
+        const withNew = filtered.concat({ cfi: result.finalCfi, range: result.finalRange })
+        highlightsRef.current = withNew
+        console.log("withNew", withNew);
+        return withNew
+      })
+      
+
+
+    })
     book.ready.then(() => {
       book.locations.generate(1000).then(() => {
         console.log("locations:", book.locations.length())
@@ -140,6 +233,7 @@ export default function ReadPage() {
   }
 
   const progress = currentLocation && totalLocations ? Math.round((currentLocation.start.location / totalLocations) * 100) : 0
+  console.log("highlights", highlights);
 
   return (
     <Sheet>
