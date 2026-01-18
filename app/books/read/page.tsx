@@ -9,6 +9,9 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChevronLeft, ChevronRight, MessageCircle, X, Bot, StickyNote, Copy } from 'lucide-react'
 import AiChatPanel from './components/AiChatPanel'
+import toast from 'react-hot-toast'
+import { Popover, PopoverContent } from '@/components/ui/popover'
+import { PopoverTrigger } from '@/components/ui/popover'
 
 interface TocItem {
   label: string
@@ -89,7 +92,7 @@ export default function ReadPage() {
     // Convert merged range to CFI string using the book's CFI generator
     const mergedCfi = contents.cfiFromRange(merged)
     console.log("mergedCfi", mergedCfi)
-    return mergedCfi  
+    return mergedCfi
   }
 
   const handleHighlightMerging = (rendition: any, selectedCfi: string, range: Range, highlights: { cfi: string, range: Range }[]) => {
@@ -144,18 +147,38 @@ export default function ReadPage() {
 
     renditionRef.current = rendition
 
+    // Apply custom selection color theme
+    rendition.themes.register('yellow-selection', {
+      '::selection': {
+        'background': 'yellow !important',
+        'color': 'black'
+      }
+    })
+    rendition.themes.select('yellow-selection')
+
     rendition.on('relocated', (location: Location) => {
       setCurrentLocation(location)
+      // reset our highlights
+      highlightsRef.current = []
+      setHighlights([])
       if (location.start.cfi !== currentCfiRef.current) {
         setCfi(location.start.cfi)
         currentCfiRef.current = location.start.cfi
       }
     })
 
+    rendition.on("click", () => {
+      setShowHighlightMenu(false)
+    })
+
     // Handle text selection / highlight in the ePub viewer
     rendition.on('selected', (selectedCfi: string) => {
       console.log("selectedCfi", selectedCfi);
       const currentRange = rendition.getRange(selectedCfi)
+      if (!currentRange) {
+        toast.error('Invalid selection, please redo')
+        return
+      }
       const rect = currentRange.getBoundingClientRect()
       const viewerRect = viewerRef.current?.getBoundingClientRect()
 
@@ -177,11 +200,29 @@ export default function ReadPage() {
       const result = handleHighlightMerging(rendition, selectedCfi, currentRange, highlightsRef.current)
       console.log("result", result);
       result.highlightsToRemove.forEach(highlight => rendition.annotations.remove(highlight.cfi, 'highlight'))
-      // settimeout
-      setTimeout(() => {
-        rendition.annotations.add('highlight', result.finalCfi, {}, () => { }, 'hl-yellow')
-      }, 1000)
-      
+      rendition.annotations.add('highlight', result.finalCfi, {}, (e: any) => {
+        // Handle click on existing highlight
+        const range = rendition.getRange(result.finalCfi)
+        if (range) {
+          const text = range.toString()
+          setSelectedText(text)
+          // Position menu below if near top, above otherwise
+          const rect = range.getBoundingClientRect()
+          const viewerRect = viewerRef.current?.getBoundingClientRect()
+          if (viewerRect) {
+            // Calculate horizontal center of selection relative to viewer
+            const selectionCenterX = rect.left - viewerRect.left + rect.width / 2
+            // Position menu below if near top, above otherwise
+            const isNearTop = rect.top < 60
+            setMenuPosition({
+              x: selectionCenterX,
+              y: isNearTop ? rect.bottom + 5 : rect.top - 45
+            })
+          }
+          setShowHighlightMenu(true)
+        }
+      }, 'hl-yellow')
+
       setHighlights(prev => {
         const filtered = prev.filter(highlight => !result.highlightsToRemove.some(removed => removed.cfi === highlight.cfi))
         const withNew = filtered.concat({ cfi: result.finalCfi, range: result.finalRange })
@@ -189,7 +230,9 @@ export default function ReadPage() {
         console.log("withNew", withNew);
         return withNew
       })
-      
+
+      toast.success('Text highlighted!')
+
 
 
     })
@@ -348,6 +391,7 @@ export default function ReadPage() {
                             variant="ghost"
                             onClick={() => {
                               navigator.clipboard.writeText(selectedText)
+                              toast.success('Text copied to clipboard!')
                               setShowHighlightMenu(false)
                             }}
                           >
@@ -361,6 +405,92 @@ export default function ReadPage() {
                     </TooltipProvider>
                   </div>
                 )}
+                {/* <Popover open={showHighlightMenu} onOpenChange={setShowHighlightMenu}>
+                  <PopoverTrigger asChild>
+                    <div style={{ display: 'none' }} />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="center"
+                    className="z-50 p-1 flex gap-1"
+                    // style={{
+                    //   position: "absolute",
+                    //   left: menuPosition.x,
+                    //   top: menuPosition.y,
+                    //   transform: "translateX(-50%)",
+                    // }}
+                    onInteractOutside={() => setShowHighlightMenu(false)}
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setShowAiChat(true)
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <Bot className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Ask AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowHighlightMenu(false)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Close</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              console.log('Add notes', selectedText)
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <StickyNote className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add Notes</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedText)
+                              toast.success('Text copied to clipboard!')
+                              setShowHighlightMenu(false)
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </PopoverContent>
+                </Popover> */}
               </div>
             </ResizablePanel>
 
