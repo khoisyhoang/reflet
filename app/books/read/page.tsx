@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { Sheet } from '@/components/ui/sheet'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import AiChatPanel from './components/AiChatPanel'
@@ -12,7 +14,6 @@ import { useEpubReader } from './hooks/useEpubReader'
 import { calculateProgress } from './services/epubService'
 
 export default function ReadPage() {
-  const [showAiChat, setShowAiChat] = useState(false)
 
   const {
     metadata,
@@ -29,31 +30,48 @@ export default function ReadPage() {
     handleRemoveHighlight,
     handleCopyText,
     handleAddNotes,
+    saveProgress,
     setShowHighlightMenu,
   } = useEpubReader({ epubPath: '/pom.epub' })
+
+  const router = useRouter()
+
+  const handleFinish = async () => {
+    const loadingToast = toast.loading('Hold on, we are submitting...')
+    try {
+      await saveProgress()
+      toast.dismiss(loadingToast)
+      toast.success('Session saved!')
+      router.push('/books')
+
+    } catch (error) {
+      toast.dismiss(loadingToast)
+      toast.error('Failed to save session')
+    }
+  }
 
   const progress = calculateProgress(currentLocation, totalLocations)
 
   return (
     <Sheet>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 max-w-screen">
         <div className="flex-1 flex flex-col">
-          <ReaderHeader title={metadata.title || ''} progress={progress} />
+          <ReaderHeader title={metadata.title || ''} progress={progress} onFinish={handleFinish} />
 
           <ResizablePanelGroup orientation="horizontal" className="flex-1">
             <ResizablePanel
-              defaultSize={showAiChat ? 70 : 100}
-              minSize={20}
+              defaultSize={75}
+              minSize={75}
+              maxSize={75}
               className="flex flex-col"
             >
-              <div className="relative flex-1 overflow-hidden max-w-screen">
+              <div className="relative flex-1 overflow-hidden max-w-[75vw]">
                 <div ref={viewerRef} className="w-full h-full" />
 
                 <NavigationButtons
                   currentLocation={currentLocation}
                   onPrev={handlePrev}
                   onNext={handleNext}
-                  onToggleChat={() => setShowAiChat(!showAiChat)}
                 />
 
                 {showHighlightMenu && (
@@ -61,7 +79,6 @@ export default function ReadPage() {
                     position={menuPosition}
                     selectedText={selection.text}
                     onAskAI={() => {
-                      setShowAiChat(true)
                       setShowHighlightMenu(false)
                     }}
                     onRemoveHighlight={handleRemoveHighlight}
@@ -72,19 +89,16 @@ export default function ReadPage() {
               </div>
             </ResizablePanel>
 
-            {showAiChat && (
-              <>
-                <ResizableHandle withHandle />
-                <ResizablePanel
-                  defaultSize={30}
-                  minSize={20}
-                  collapsible
-                  className="flex flex-col"
-                >
-                  <AiChatPanel />
-                </ResizablePanel>
-              </>
-            )}
+            <ResizableHandle withHandle />
+            <ResizablePanel
+              defaultSize={25}
+              minSize={25}
+              maxSize={25}
+              collapsible
+              className="flex flex-col"
+            >
+              <AiChatPanel />
+            </ResizablePanel>
           </ResizablePanelGroup>
         </div>
       </div>

@@ -1,19 +1,17 @@
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Location } from '../services/epubService'
 
 interface NavigationButtonsProps {
   currentLocation: Location | null
   onPrev: () => void
   onNext: () => void
-  onToggleChat: () => void
 }
 
 export function NavigationButtons({
   currentLocation,
   onPrev,
   onNext,
-  onToggleChat,
 }: NavigationButtonsProps) {
   return (
     <>
@@ -32,13 +30,6 @@ export function NavigationButtons({
         size="icon"
       >
         <ChevronRight />
-      </Button>
-      <Button
-        onClick={onToggleChat}
-        className="absolute top-4 right-4 bg-black/50 text-white hover:bg-black/70 border-0"
-        size="icon"
-      >
-        <MessageCircle />
       </Button>
     </>
   )

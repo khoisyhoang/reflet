@@ -188,6 +188,16 @@ export function useEpubReader({ epubPath }: UseEpubReaderProps) {
     }
   }
 
+  // Save progress handler
+  const saveProgress = async () => {
+    const session = { cfi: currentCfiRef.current, highlights: highlightsRef.current }
+    localStorage.setItem('readingSession', JSON.stringify(session))
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Simulate occasional failure
+    if (Math.random() > 0.8) throw new Error('Failed to save session')
+  }
+
   // Highlight menu handlers
   const handleRemoveHighlight = () => {
     if (selection.cfi && renditionRef.current) {
@@ -234,6 +244,7 @@ export function useEpubReader({ epubPath }: UseEpubReaderProps) {
     handleRemoveHighlight,
     handleCopyText,
     handleAddNotes,
+    saveProgress,
     setShowHighlightMenu,
   }
 }
