@@ -12,6 +12,7 @@ import { HighlightMenu } from './components/HighlightMenu'
 import { TOCPanel } from './components/TOCPanel'
 import { useEpubReader } from './hooks/useEpubReader'
 import { calculateProgress } from './services/epubService'
+import { useChatSocket } from '@/hooks/useChatSocket'
 
 export default function ReadPage() {
 
@@ -35,6 +36,8 @@ export default function ReadPage() {
   } = useEpubReader({ epubPath: '/pom.epub' })
 
   const router = useRouter()
+
+  const socket = useChatSocket();
 
   const handleFinish = async () => {
     const loadingToast = toast.loading('Hold on, we are submitting...')
@@ -97,7 +100,7 @@ export default function ReadPage() {
               collapsible
               className="flex flex-col"
             >
-              <AiChatPanel />
+              <AiChatPanel socket={socket}/>
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>

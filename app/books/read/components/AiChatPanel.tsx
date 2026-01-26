@@ -12,7 +12,7 @@ interface Message {
   sender: 'user' | 'bot'
 }
 
-export default function AiChatPanel() {
+export default function AiChatPanel({ socket }: { socket: any }) {
   const [messages, setMessages] = useState<Message[]>([
     { text: "Hello! How can I help you with this book?", sender: 'bot' }
   ])
@@ -29,6 +29,7 @@ export default function AiChatPanel() {
 
   const sendMessage = () => {
     if (input.trim()) {
+      socket.emit('message', input)
       setMessages(prev => [...prev, { text: input, sender: 'user' }])
       setInput("")
       // Scroll to bottom after state update

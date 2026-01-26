@@ -3,11 +3,14 @@
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { io } from 'socket.io-client';
 
 export default function SearchBar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
