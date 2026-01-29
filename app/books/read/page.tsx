@@ -46,6 +46,7 @@ export default function ReadPage() {
       toast.dismiss(loadingToast)
       toast.success('Session saved!')
       router.push('/books')
+      
 
     } catch (error) {
       toast.dismiss(loadingToast)
