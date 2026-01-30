@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
+import { getChapter } from '../services/readingContextService'
 
 interface Message {
   text: string
@@ -14,7 +15,14 @@ interface Message {
   isTyping?: boolean
 }
 
-export default function AiChatPanel({ socket }: { socket: any }) {
+export default function AiChatPanel({ socket, highlights, bookName, currentLocation, totalLocations, epubBook }: { 
+  socket: any; 
+  highlights?: any[]; 
+  bookName?: string;
+  currentLocation?: any;
+  totalLocations?: number;
+  epubBook?: any;
+}) {
   const [messages, setMessages] = useState<Message[]>([
     { text: "Hello! How can I help you with this book?", sender: 'bot' }
   ])
@@ -32,10 +40,11 @@ export default function AiChatPanel({ socket }: { socket: any }) {
   useEffect(() => {
     if (!socket) return; // Wait for socket to be available
     socket.on('ai-start', () => {
-      setMessages(prev => [...prev, { text: "...", sender: 'bot', isTyping: true }])
+      flushSync(() => {
+        setMessages(prev => [...prev, { text: "...", sender: 'bot', isTyping: true }])
+      })
     })
     socket.on('ai-chunk', (chunk: string) => {
-      console.log('gotchu')
       flushSync(() => {
         setMessages(prev => {
           const newMessages = [...prev];
@@ -64,26 +73,57 @@ export default function AiChatPanel({ socket }: { socket: any }) {
       scrollToBottom();
     });
 
+    socket.on('user-message', (text: string) => {
+      setMessages(prev => [...prev, { text, sender: 'user' }])
+      setTimeout(scrollToBottom, 100)
+    })
+
     // Cleanup listeners when socket changes
     return () => {
       socket.off('ai-chunk');
+      socket.off('user-message');
     };
-  }, [socket]);
+  }, [socket])
 
+  // Calculate reading progress
+  // const readingProgress = getReadingProgress(currentLocation, totalLocations || 0)
+
+  // Get current chapter from TOC
+  const currentChapter = getChapter(epubBook, currentLocation)
+  
   const sendMessage = () => {
     if (input.trim() && !messages[messages.length - 1]?.isTyping) {
-      socket.emit('message', input)
+      // Extract actual highlight text, not Range objects
+      const highlightTexts = highlights?.map(h => h.range?.toString()).filter(text => text && text.trim()) || []
+
+      const messageData = {
+        message: input,
+        highlights: highlightTexts, // Send actual text, not Range objects
+        bookName: bookName || "Unknown Book",
+        // readingProgress, // TODO: Add back later if needed
+        currentChapter,
+        // currentSelection: currentSelection, // if user has text selected
+      }
+
+      socket.emit('message', messageData)
       setMessages(prev => [...prev, { text: input, sender: 'user' }])
       setInput("")
-      // Scroll to bottom after state update
       setTimeout(scrollToBottom, 100)
     }
   }
 
+  const handleGetChapter = () => {
+    const chapter = getChapter(epubBook, currentLocation);
+    alert(`Current Chapter: ${chapter || 'Not found'}`);
+  }
+
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex justify-between items-center">
         <h2 className="text-lg font-semibold">AI Chat</h2>
+        <Button onClick={handleGetChapter} variant="outline" size="sm">
+          Get Chapter
+        </Button>
       </div>
 
       <div className="flex-1 overflow-hidden">

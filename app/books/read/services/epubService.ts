@@ -17,6 +17,7 @@ export interface Metadata {
 
 export interface Location {
   start: { cfi: string; location: number }
+  href: string
   end: { location: number }
   atStart: boolean
   atEnd: boolean

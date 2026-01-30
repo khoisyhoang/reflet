@@ -21,6 +21,7 @@ import {
   calculateMenuPosition,
   type HighlightData,
 } from '../services/highlightService'
+import Locations from 'epubjs/types/locations'
 
 interface UseEpubReaderProps {
   epubPath: string
@@ -45,7 +46,6 @@ export function useEpubReader({ epubPath }: UseEpubReaderProps) {
   const viewerRef = useRef<HTMLDivElement | null>(null)
   const currentCfiRef = useRef<string | null>(null)
   const highlightsRef = useRef<HighlightData[]>([])
-
   // Initialize EPUB
   useEffect(() => {
     if (!viewerRef.current) return
@@ -70,11 +70,16 @@ export function useEpubReader({ epubPath }: UseEpubReaderProps) {
     // Generate locations for progress tracking
     generateLocations(book).then((total) => {
       setTotalLocations(total)
+      // Display the book at the beginning if no CFI is set
+      if (!cfi) {
+        rendition.display()
+      }
     })
-
+    
     // Handle location changes
     rendition.on('relocated', (location: Location) => {
       setCurrentLocation(location)
+      console.log("location here", location)
       // Reset highlights on page change
       highlightsRef.current = []
       setHighlights([])
@@ -235,6 +240,7 @@ export function useEpubReader({ epubPath }: UseEpubReaderProps) {
     menuPosition,
     selection,
     highlights,
+    epubBook, // Add book object for chapter detection
     viewerRef,
 
     // Handlers

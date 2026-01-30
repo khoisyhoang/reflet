@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Sheet } from '@/components/ui/sheet'
@@ -24,6 +24,8 @@ export default function ReadPage() {
     showHighlightMenu,
     menuPosition,
     selection,
+    highlights,
+    epubBook, // Add book object
     viewerRef,
     handleTocClick,
     handlePrev,
@@ -83,6 +85,19 @@ export default function ReadPage() {
                     position={menuPosition}
                     selectedText={selection.text}
                     onAskAI={() => {
+                      if (socket && highlights.length > 0) {
+                        const highlightTexts = highlights.map(h => h.range?.toString() || '').filter(text => text.trim())
+                        if (highlightTexts.length > 0) {
+                          const message = `Here are all the highlights from the book: ${highlightTexts.join(' | ')}`
+                          const messageData = {
+                            message,
+                            highlights: highlightTexts,
+                            bookName: metadata.title,
+                          }
+                          socket.emit('message', messageData)
+                          socket.emit('user-message', message)
+                        }
+                      }
                       setShowHighlightMenu(false)
                     }}
                     onRemoveHighlight={handleRemoveHighlight}
@@ -101,7 +116,14 @@ export default function ReadPage() {
               collapsible
               className="flex flex-col"
             >
-              <AiChatPanel socket={socket}/>
+              <AiChatPanel 
+                socket={socket} 
+                highlights={highlights} 
+                bookName={metadata.title}
+                currentLocation={currentLocation}
+                totalLocations={totalLocations}
+                epubBook={epubBook}
+              />
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
