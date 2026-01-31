@@ -24,7 +24,7 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
   epubBook?: any;
 }) {
   const [messages, setMessages] = useState<Message[]>([
-    { text: "Hello! How can I help you with this book?", sender: 'bot' }
+    { text: "H", sender: 'bot' }
   ])
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -121,9 +121,7 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
     <div className="flex flex-col h-full bg-background">
       <div className="p-4 border-b flex justify-between items-center">
         <h2 className="text-lg font-semibold">AI Chat</h2>
-        <Button onClick={handleGetChapter} variant="outline" size="sm">
-          Get Chapter
-        </Button>
+        
       </div>
 
       <div className="flex-1 overflow-hidden">
