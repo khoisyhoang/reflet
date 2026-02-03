@@ -4,6 +4,7 @@
 
 import { Book, EpubCFI, NavItem } from "epubjs";
 import { Location } from "./epubService";
+import { CloudCog } from "lucide-react";
 
 /**
  * Calculate reading progress as a percentage
@@ -18,30 +19,44 @@ export function getReadingProgress(
   return Math.round((currentLocation.start.location / totalLocations) * 100)
 }
 */
-export function getCfiFromHref(book: Book, href: string) {
+export async function getCfiFromHref(book: Book, href: string) {
     const [_, id] = href.split('#')
     const section = book.spine.get(href)
+    
+    // Ensure the section is loaded before accessing its document
+    if (!section.document) {
+        await section.load(book.load.bind(book))
+    }
+    
     const el = (id ? section.document.getElementById(id) : section.document.body) as Element
     return section.cfiFromElement(el)
 }
 
-export function getChapter(book: Book, location: Location): string | null {
+export async function getChapter(book: Book, location: Location): Promise<string | null> {
     if (!book) return null;
     if (!location) return null;
     
     let locationCfi = location.start.cfi;
     let spineItem = book.spine.get(locationCfi);
-    const toc = book.navigation.toc;
-    console.log("locationCfi here", location)
-    console.log("spineItem here", spineItem.cfiFromElement(spineItem.document.body));
-    const chapterCfi = spineItem.cfiFromElement(spineItem.document.body);
-    if (EpubCFI.prototype.compare(locationCfi, chapterCfi) === 0) {
-        return null;
-    }
-    console.log("toc here", toc);
-    let navItem = book.navigation.get(spineItem.href);
     
-    console.log("navItem here", navItem?.label);
-    console.log("current here", navItem?.label);
-    return navItem?.label?.trim();
+    // Ensure spineItem document is loaded
+    if (!spineItem.document) {
+        await spineItem.load(book.load.bind(book))
+    }
+    
+    const toc = book.navigation.toc;
+    
+    
+    // Process TOC items sequentially to handle async getCfiFromHref
+    let myChapter: NavItem | undefined;
+    for (let index = 0; index < toc.length; index++) {
+        let item = toc[index];
+        const itemCfi = await getCfiFromHref(book, item.href);
+        if (EpubCFI.prototype.compare(locationCfi, itemCfi) < 0) {
+            myChapter = toc[index-1];
+            break;
+        }
+    }
+
+    return myChapter?.label || null;
 };

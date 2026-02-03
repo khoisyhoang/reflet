@@ -8,8 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { getChapter } from '../services/readingContextService'
+import { processMessageUpdate } from '../utils/messageUtils'
 
-interface Message {
+export interface Message {
   text: string
   sender: 'user' | 'bot'
   isTyping?: boolean
@@ -34,10 +35,6 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [])
-
-  useEffect(() => {
     if (!socket) return; // Wait for socket to be available
     socket.on('ai-start', () => {
       flushSync(() => {
@@ -46,36 +43,16 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
     })
     socket.on('ai-chunk', (chunk: string) => {
       flushSync(() => {
-        setMessages(prev => {
-          const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage && lastMessage.sender === 'bot') {
-            if (lastMessage.isTyping) {
-              // Replace the typing indicator with the first chunk
-              newMessages[newMessages.length - 1] = {
-                text: chunk,
-                sender: 'bot'
-              };
-            } else {
-              // Append chunk to the existing bot message
-              newMessages[newMessages.length - 1] = {
-                ...lastMessage,
-                text: lastMessage.text + chunk
-              };
-            }
-          } else {
-            // Add new bot message if last wasn't bot or doesn't exist
-            newMessages.push({ text: chunk, sender: 'bot' });
-          }
-          return newMessages;
-        });
+        setMessages(prev => processMessageUpdate(prev, chunk));
+        scrollToBottom();
       });
-      scrollToBottom();
     });
 
     socket.on('user-message', (text: string) => {
       setMessages(prev => [...prev, { text, sender: 'user' }])
+      
       setTimeout(scrollToBottom, 100)
+
     })
 
     // Cleanup listeners when socket changes
@@ -85,36 +62,27 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
     };
   }, [socket])
 
-  // Calculate reading progress
-  // const readingProgress = getReadingProgress(currentLocation, totalLocations || 0)
-
-  // Get current chapter from TOC
-  const currentChapter = getChapter(epubBook, currentLocation)
-  
-  const sendMessage = () => {
+  const sendMessage = async() => {
     if (input.trim() && !messages[messages.length - 1]?.isTyping) {
       // Extract actual highlight text, not Range objects
       const highlightTexts = highlights?.map(h => h.range?.toString()).filter(text => text && text.trim()) || []
-
+      const chapter = await getChapter(epubBook, currentLocation);  
+      console.log("chapter", chapter)
       const messageData = {
         message: input,
         highlights: highlightTexts, // Send actual text, not Range objects
         bookName: bookName || "Unknown Book",
         // readingProgress, // TODO: Add back later if needed
-        currentChapter,
+        chapter: chapter,
         // currentSelection: currentSelection, // if user has text selected
       }
+      console.log("messageData", messageData)
 
       socket.emit('message', messageData)
       setMessages(prev => [...prev, { text: input, sender: 'user' }])
       setInput("")
       setTimeout(scrollToBottom, 100)
     }
-  }
-
-  const handleGetChapter = () => {
-    const chapter = getChapter(epubBook, currentLocation);
-    alert(`Current Chapter: ${chapter || 'Not found'}`);
   }
 
   return (
