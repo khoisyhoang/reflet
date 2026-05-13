@@ -7,8 +7,63 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
+import ReactMarkdown from 'react-markdown'
 import { getChapter } from '../services/readingContextService'
 import { processMessageUpdate } from '../utils/messageUtils'
+
+const markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
+  p: ({ children }) => <p className="mb-3 last:mb-0 leading-7">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2 first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-lg font-bold mt-4 mb-2 first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-base font-semibold mt-3 mb-1 first:mt-0">{children}</h3>,
+  ul: ({ children }) => <ul className="mb-3 ml-5 space-y-1 list-disc">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-3 ml-5 space-y-1 list-decimal">{children}</ol>,
+  li: ({ children }) => <li className="leading-7 pl-1">{children}</li>,
+  hr: () => <hr className="my-4 border-border" />,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-blue-400 underline underline-offset-2 hover:text-blue-300 transition-colors">
+      {children}
+    </a>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-muted-foreground/30 pl-4 my-3 italic text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+  code: ({ children, className }) => {
+    if (!className) {
+      return (
+        <code className="bg-muted-foreground/15 rounded px-1.5 py-0.5 text-[0.8em] font-mono">
+          {children}
+        </code>
+      )
+    }
+    return <code className={`${className} font-mono text-sm leading-relaxed`}>{children}</code>
+  },
+  pre: ({ children }) => {
+    const codeEl = children as React.ReactElement<{ className?: string; children?: string }>
+    const lang = (codeEl?.props?.className ?? '').replace('language-', '') || 'code'
+    const codeText = String(codeEl?.props?.children ?? '').trimEnd()
+    return (
+      <div className="rounded-lg overflow-hidden my-3 text-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-700 dark:bg-zinc-800 text-zinc-300 text-xs font-mono">
+          <span>{lang}</span>
+          <button
+            onClick={() => navigator.clipboard.writeText(codeText)}
+            className="hover:text-white transition-colors"
+          >
+            Copy
+          </button>
+        </div>
+        <pre className="bg-zinc-800 dark:bg-zinc-900 text-zinc-100 p-4 overflow-x-auto leading-relaxed">
+          {children}
+        </pre>
+      </div>
+    )
+  },
+}
 
 export interface Message {
   text: string
@@ -117,6 +172,10 @@ export default function AiChatPanel({ socket, highlights, bookName, currentLocat
                           <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                           <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                           <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      ) : message.sender === 'bot' ? (
+                        <div className="text-sm max-w-none">
+                          <ReactMarkdown components={markdownComponents}>{message.text}</ReactMarkdown>
                         </div>
                       ) : (
                         <p className="text-sm">{message.text}</p>
