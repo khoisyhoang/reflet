@@ -5,7 +5,6 @@ import ConditionalNavbar from "./components/ConditionalNavbar";
 import { NuqsAdapter } from 'nuqs/adapters/next'
 import { ThemeProvider } from "next-themes";
 import { Toaster } from 'react-hot-toast'
-
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
