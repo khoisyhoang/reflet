@@ -4,7 +4,7 @@ import "./globals.css";
 import ConditionalNavbar from "./components/ConditionalNavbar";
 import { NuqsAdapter } from 'nuqs/adapters/next'
 import { ThemeProvider } from "next-themes";
-import { Toaster } from 'react-hot-toast'
+import { ToastProvider } from './components/ToastProvider'
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -37,7 +37,7 @@ export default function RootLayout({
           <NuqsAdapter>
             {children}
           </NuqsAdapter>
-          <Toaster />
+          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>

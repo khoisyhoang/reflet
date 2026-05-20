@@ -2,18 +2,46 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { BookOpen } from 'lucide-react';
+import UploadModal from './UploadModal';
+import { checkAuth } from '@/app/(auth)/utils/auth';
+import { useAuthStore } from '@/store/auth-store';
+import { uploadEpubToS3 } from '../../services/uploadService';
+import { usePathname } from 'next/navigation';
 
 interface BookSidebarProps {
   edition: any;
 }
 
 export default function BookSidebar({ edition }: BookSidebarProps) {
-  const [wantToReadStatus, setWantToReadStatus] = useState<string>('Want to Read');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [userRating, setUserRating] = useState<number>(0);
   const [isLiked, setIsLiked] = useState<boolean>(false);
-  console.log(edition)
+
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const pathname = usePathname();
+
+  const handleFileSelected = async (file: File) => {
+    const url = await uploadEpubToS3(file, `books/${file.name}`);
+    if (url.code === 'success') {
+      setUploadedFile(file);
+      setShowUploadModal(false);
+      return { code: 'success' as const, message: 'File uploaded successfully', data: { url: url.data.url } };
+    } else {
+      return { code: 'error' as const, message: 'Failed to upload file', data: { url: null } };
+    }
+  };
+
   return (
     <>
+      {showUploadModal && (
+        <UploadModal
+          onClose={() => setShowUploadModal(false)}
+          onFileSelected={handleFileSelected}
+        />
+      )}
+
       {/* Large Book Cover */}
       <div className="flex justify-center mb-6">
         {(edition.cover_i || (edition.covers && edition.covers.length > 0)) ? (
@@ -29,19 +57,11 @@ export default function BookSidebar({ edition }: BookSidebarProps) {
           </div>
         ) : (
           <div className="w-[280px] h-[420px] bg-gray-700 rounded-2xl flex items-center justify-center relative">
-            {/* Book-like rectangle */}
             <div className="absolute inset-4 border-4 border-primary/30 rounded-lg shadow-lg bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center p-4 text-center">
-              {/* Book spine effect */}
               <div className="absolute left-0 top-0 bottom-0 w-2 bg-primary/40 rounded-l-lg"></div>
-
               <h3 className="font-heading font-bold text-foreground text-lg mb-2 leading-tight">
                 {edition.title || 'Unknown Title'}
               </h3>
-              {/* {edition.authors && edition.authors.length > 0 && (
-                <p className="text-sm text-muted-foreground leading-tight">
-                  by {edition.authors.map((a: any) => a.name || a).join(', ')}
-                </p>
-              )} */}
             </div>
           </div>
         )}
@@ -49,18 +69,24 @@ export default function BookSidebar({ edition }: BookSidebarProps) {
 
       <div className="backdrop-blur-sm rounded-2xl border border-white/10 shadow-xl w-[280px] p-3">
         <div className="space-y-6">
-      {/* Want to Read Dropdown */}
-      <div className="space-y-2">
-        <select
-          value={wantToReadStatus}
-          onChange={(e) => setWantToReadStatus(e.target.value)}
-          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold text-sm"
-        >
-          <option value="Want to Read">Want to Read</option>
-          <option value="Currently Reading">Currently Reading</option>
-          <option value="Read">Read</option>
-        </select>
-      </div>
+        {/* Read Button */}
+        <div className="space-y-2">
+          <button
+            onClick={async () => {
+              await checkAuth(accessToken || '', pathname);
+              setShowUploadModal(true);
+            }}
+            className="w-full bg-green-600 hover:bg-green-500 text-white px-4 py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />
+            {uploadedFile ? 'Continue Reading' : 'Read'}
+          </button>
+          {uploadedFile && (
+            <p className="text-xs text-gray-500 text-center truncate px-1">
+              {uploadedFile.name}
+            </p>
+          )}
+        </div>
 
       {/* Shop this Series Button */}
       <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2">

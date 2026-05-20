@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { GoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('r') || '/';
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +49,7 @@ export default function LoginPage() {
 
       if (response.ok && result.code === 'success') {
         useAuthStore.getState().setAccessToken(result.data.accessToken);
-        router.push('/');
+        router.push(redirectTo);
       } else {
         setError(result.message || 'Login failed');
       }
